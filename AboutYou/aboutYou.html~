@@ -27,7 +27,7 @@ Jing, Zhang
 
 <h2>Photo</h2>
 <p>
-<img src="pic.jpg" height="500" width="380">
+<img src="pic.jpg" height="500" width="360">
 <i class="note">Don't forget to explicitly add the image to your git repository.</i>
 </p>
 
