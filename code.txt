@@ -1,1 +1,13 @@
 Jing Zhang
+cd Dropbox
+cd Statistics
+cd STA242
+mkdir Assignment1
+cd Assignment1
+git init
+git add data
+git commit -m 'initial data set'
+git remote add origin git@bitbucket.org:lingyuzhe/assignment1.git
+git push -u origin --all
+echo 'Jing Zhang' > code.txt
+emacs -nw code.txt
