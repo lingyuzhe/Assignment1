@@ -1,31 +1,63 @@
+FindHeader=
+function(x)
+{
+  txt=readLines(file(x))
+  k=match("=",substr(txt,1,1))
+  txt[k]=gsub(' ','x',txt[k])
+  txt[k]=gsub("(\\w)\\b","\\U\\1",txt[k], perl=TRUE)
+  txt[k]=gsub ('x','=',txt[k])
+  txt[k]=gsub ('X',' ',txt[k])
+  txt[k]=strsplit(txt[k], " ")
+  w=nchar(txt[k][[1]])+1
+  if(is.na(k)){Header=character()} else
+  {Header=read.fwf(x,widths=w,skip = k-2,n=1,comment.char = '',stringsAsFactors=FALSE)}
+  Header=gsub(" ","",Header)
+  Header=gsub(intToUtf8(0xA0),"",Header)
+  Header=toupper(Header)
+  Header=gsub("GUNTIM","TIME",Header)
+  Header=gsub("GUN","TIME",Header)
+  list(txt=txt,k=k,w=w,Header=Header)
+}
+
+FindBody=
+function(t)
+{
+  pattern="([0-9]+):([0-9]+)"
+  rows=grep(pattern,t)
+  Body=t[rows]
+}
+
+
 readFile=
-  function(x)
+function(x)
   {
-    l=match("#",substr(readLines(file(x)),1,1))
-    if (is.na(l)) {l=match(" #",substr(readLines(file(x)),1,2))}
-    if (x=="women10Mile_2001") {txt = readLines(file("men10Mile_2001"))}  else
-    {txt = readLines(file(x))}
+    pattern="([a-zA-Z]+)+([0-9]+)+([a-zA-Z]+)+([[:punct:]])+([0-9]+)"
+    GENDER=gsub(pattern,"\\1",x)
+    YEAR=as.numeric(gsub(pattern,"\\5",x))
     
-    k=match("=",substr(txt,1,1))
-    txt[k]=gsub(' ','x',txt[k])
-    txt[k]=gsub("(\\w)\\b","\\U\\1",txt[k], perl=TRUE)
-    txt[k]=gsub ('x','=',txt[k])
-    txt[k]=gsub ('X',' ',txt[k])
-    txt[k]=strsplit(txt[k], " ")
-    w=nchar(txt[k][[1]])+1
+    txt=FindHeader(x)$txt
+      
+    k=FindHeader(x)$k
+    w=FindHeader(x)$w
+    Header=unlist(FindHeader(x)$Header)
+    if(is.na(k)){
+      if (GENDER=="men"){
+        y=gsub(pattern,"women\\2\\3\\4\\5",x)
+        w=FindHeader(y)$w
+        Header=unlist(FindHeader(y)$Header)
+                        } else
+                         { 
+                         y=gsub(pattern,"men\\2\\3\\4\\5",x)
+                         w=FindHeader(y)$w
+                         Header=unlist(FindHeader(y)$Header)
+                          }
+                        }
+    Body=textConnection (unlist(FindBody(txt)))
+    data=read.fwf(Body,widths=w,comment.char = '',stringsAsFactors=FALSE)
+    close(Body)
     
-    if (is.na(l)) {data=read.fwf(x,widths=w,skip = (k-2),comment.char = '')} else
-    {data=read.fwf(x,widths=w,skip = (k-2),n=(l+1-k),comment.char = '')}
-    
-    if (is.na(t(data)[,1][1])) {header=t(read.fwf("men10Mile_2001",widths=w,skip = (k-2)))[,1]} else
-    {header=t(data)[,1]}
-    header=gsub(" ","",header)
-    header=gsub(intToUtf8(0xA0),"",header)
-    header=toupper(header)
-    data=data[-c(1,2),]
-    data=data[complete.cases(data),]
-    write.table(data,"~/Dropbox/Statistics/STA242/Assignment1/z")
-    data=read.table("~/Dropbox/Statistics/STA242/Assignment1/z",stringsAsFactors=FALSE)
-    names(data)=header
+    names(data)=Header
+    data$GENDER=GENDER
+    data$YEAR=YEAR
     data
-  }
+}
